@@ -22,6 +22,7 @@ void flv_param_default(flv_param *param)
 	param->b_tag   = 0;
 	param->b_video = 0;
 	param->b_audio = 0;	
+	param->b_nflv  = 0;
 }
 
 /* ½âÎöÅäÖÃ²ÎÊı */
