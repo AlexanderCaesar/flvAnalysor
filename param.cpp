@@ -43,12 +43,12 @@ bool parse(flv_param *param,int argc, char **argv)
 		}
 		switch(argv[i][1])
 		{
-		case 'h':showHelp();system("pause\n");exit(0);break;
-		case 'i':flv_file_name = argv[i+1];break;
-		case 't':flv_tag_name = argv[i+1];break;
-		case 'v':flv_video_name = argv[i+1];break;
-		case 'a':flv_audio_name = argv[i+1];break;
-		case 'o':flv_out_name = argv[i+1];break;
+		case 'h':showHelp();system("pause\n");exit(0);          break;
+		case 'i':flv_file_name = argv[i+1];                     break;
+		case 't':flv_tag_name = argv[i+1];  param->b_tag   = 1; break;
+		case 'v':flv_video_name = argv[i+1];param->b_video = 1; break;
+		case 'a':flv_audio_name = argv[i+1];param->b_audio = 1; break;
+		case 'o':flv_out_name = argv[i+1];  param->b_nflv  = 1; break;
 		default:printf("²ÎÊıÅäÖÃÓĞÎó:%s\n",argv[i]); return false;
 		}
 	}

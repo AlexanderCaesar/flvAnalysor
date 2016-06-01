@@ -15,6 +15,9 @@ public:
 	void create(flv_param *param);/* 申请内存 */
 	void destory();/* 释放内存 */
 
+	/* 分析flv文件头 */
+	void anlysisFlvHeader();
+
 	/* 分析flv文件 */
 	void anlysis();
 };
