@@ -2,6 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include "analysis.h"
+void author(flv_param *param)
+{
+    if(!param->b_tag) return;
+    fprintf(g_flv_tag,"==================作者 信息=========================\n");
+    fprintf(g_flv_tag,"网       名:    xiaoC/cabbage/Alexander/Caesar\n");
+    fprintf(g_flv_tag,"邮       箱:    xiaoc@pku.edu.cn\n");
+    fprintf(g_flv_tag,"博       客:    http://blog.csdn.net/cabbage2008\n");
+}
 Anlysis::Anlysis()
 {
 	m_param          = NULL;
@@ -163,6 +171,7 @@ void Anlysis::readPreTagSize()
 /* 分析flv文件 */
 void Anlysis::anlysis()
 {
+    author(m_param);
 	anlysisFlvHeader();//分析flv头
     readFirstTagSize();//分析第一个TAG长度
     m_tagConter = 0;   //初始化为0
@@ -177,19 +186,26 @@ void Anlysis::anlysis()
             printf("%5d   Tags 分析完毕\n",m_tagConter);
         }
 
-        char data[100000];
-        fread(data,1,m_tagHeader->getSize()-11,g_flv_file);
+        m_tagData.size = m_tagHeader->getSize()-11;             //获取Tag数据长度
+        m_tagData.decoderTimeStamp = m_tagHeader->getTimeStamp();//获取Tag解码时间戳
+        m_tagData.data = (unsigned char*)malloc(m_tagData.size);//申请Tag数据内存
+        if(!m_tagData.data)
+        {
+            fprintf(g_flv_tag,"错误:m_tagData.data分配内存失败\n");
+            break;
+        }
+        fread(m_tagData.data,1,m_tagData.size,g_flv_file);      //获取Tag数据
 
-
+        free(m_tagData.data);//释放内存
         readPreTagSize();//分析前一个Tag Size
-        m_tagConter++;
+        m_tagConter++;   //计数Tag个数
 
         //break;        
     }
     printf("errors:    %d\n",m_errors);
 
     //FLV概要信息
-    fprintf(g_flv_tag,"==================FLV 概要信息=========================\n");
+    fprintf(g_flv_tag,"\n\n==================FLV 概要信息=========================\n");
     fprintf(g_flv_tag,"FLV Tag个数:    %d\n",m_tagConter);
     fprintf(g_flv_tag,"FLV错误个数:    %d\n",m_errors);
 }

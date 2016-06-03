@@ -96,4 +96,12 @@ public:
     }
 };
 
+class TagData
+{
+public:
+    unsigned char*  data; //存放TagData信息
+    unsigned int    size; //存放TagData的size
+    unsigned int    decoderTimeStamp; //解码时间戳
+};
+
 #endif
