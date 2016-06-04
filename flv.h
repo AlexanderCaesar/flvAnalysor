@@ -1,5 +1,5 @@
 #ifndef XIAOC_FLV_H
-#define  XIAOC_FLV_H
+#define XIAOC_FLV_H
 //×÷Õß  ²ÌÑâ¸Õ  20160601  xiaoc@pku.edu.cn
 
 typedef struct flv_param

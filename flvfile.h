@@ -18,6 +18,8 @@ extern char *flv_video_name; //输出视频流信息         -v 配置 如：-v brazil-bq.2
 extern char *flv_audio_name; //输出音频流信息         -a 配置 如：-a brazil-bq.aac 
 extern char *flv_out_name;   //输出修改后的flv流      -o 配置 如：-o brazil-new.flv 
 
+extern int  g_errors;        //统计错误个数
+
 void openFlvFiles();    //打开flv相关文件
 void closeFlvFiles();   //关闭flv相关文件
 #endif

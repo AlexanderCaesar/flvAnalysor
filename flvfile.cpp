@@ -14,7 +14,9 @@ char *flv_file_name  = NULL; //FLV 原始文件           -i 配置 如：-i brazil-bq.f
 char *flv_tag_name   = NULL; //打印每个tag的详细信息  -t 配置 如：-t brazil-bq.log
 char *flv_video_name = NULL; //输出视频流信息         -v 配置 如：-v brazil-bq.264 
 char *flv_audio_name = NULL; //输出音频流信息         -a 配置 如：-a brazil-bq.aac 
-char *flv_out_name   = NULL; //输出修改后的flv流      -o 配置 如：-o brazil-new.flv 
+char *flv_out_name   = NULL; //输出修改后的flv流      -o 配置 如：-o brazil-new.flv
+
+int  g_errors        = 0;    //统计错误个数
 
 //打开flv相关文件
 void openFlvFiles()    

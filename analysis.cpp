@@ -17,7 +17,6 @@ Anlysis::Anlysis()
 	m_mend_flvheader = NULL;
     m_tagHeader      = NULL;
     m_mend_tagHeader = NULL;
-    m_errors         = 0;
 	
 };
 /* 申请内存 */
@@ -28,11 +27,15 @@ void Anlysis::create(flv_param *param)
 	m_flvheader = (FlvHeader*)malloc(sizeof(FlvHeader)); //申请flv头内存
     m_tagHeader = (TagHeader*)malloc(sizeof(TagHeader)); //申请tag头内存
 	ok = ok&&m_flvheader&&m_tagHeader;
+    m_tagData.m_tagHeader = m_tagHeader;
+
 	if(m_param->b_nflv)//如果需要输出新的flv文件
 	{
 		m_mend_flvheader = (FlvHeader*)malloc(sizeof(FlvHeader)); //申请新flv头内存
         m_mend_tagHeader = (TagHeader*)malloc(sizeof(TagHeader)); //申请新tag头内存
 		ok = ok&&m_mend_flvheader&&m_mend_tagHeader;
+
+        m_mend_tagData.m_tagHeader = m_mend_tagHeader;
 	}
 
 	if(!ok)
@@ -78,7 +81,7 @@ void Anlysis::anlysisFlvHeader()
 		case 1:fprintf(g_flv_tag,"FLV数据信息:    只拥有视频流\n");break;
 		case 4:fprintf(g_flv_tag,"FLV数据信息:    只拥有音频流\n");break;
 		case 5:fprintf(g_flv_tag,"FLV数据信息:    拥有视频和音频流\n");break;
-		default:fprintf(g_flv_tag,"FLV数据信息:   flv头信息错误\n");m_errors++;
+		default:fprintf(g_flv_tag,"FLV数据信息:   flv头信息错误\n");g_errors++;
 		}
         fprintf(g_flv_tag,"FLV  头长度:    %d\n",m_flvheader->getSize());
 	}
@@ -102,7 +105,12 @@ void Anlysis::readFirstTagSize()
 
     if(data[0]!= 0||data[1]!= 0||data[2]!= 0 ||data[3]!= 0 )
     {
-        fprintf(g_flv_tag,"第一TAG  长:    错误：第一个TAG长度必须为0：%X%X%X%X\n",data[0],data[1],data[2],data[3]);m_errors++;
+        fprintf(g_flv_tag,"第一TAG  长:    错误：第一个TAG长度必须为0：%X%X%X%X\n",data[0],data[1],data[2],data[3]);g_errors++;
+    }
+
+    if(m_param->b_nflv)
+    {
+        fwrite(data,1,4,g_flv_out);
     }
 }
 
@@ -125,7 +133,7 @@ bool Anlysis::anlysisFlvTagHeader()
         case 40:fprintf(g_flv_tag,"TAG类型信息:    音频TAG TAG有滤波\n");break;
         case 41:fprintf(g_flv_tag,"TAG类型信息:    视频TAG TAG有滤波\n");break;
         case 50:fprintf(g_flv_tag,"TAG类型信息:    脚本TAG TAG有滤波\n");break;
-        default:fprintf(g_flv_tag,"TAG类型信息:    TAG类型错误，请检查当前TAG的头信息\n");m_errors++;return false;
+        default:fprintf(g_flv_tag,"TAG类型信息:    TAG类型错误，请检查当前TAG的头信息\n");g_errors++;return false;
         }
         fprintf(g_flv_tag,"TAG  头长度:    %d\n",m_tagHeader->getSize());
         char timestamp[100];
@@ -138,7 +146,7 @@ bool Anlysis::anlysisFlvTagHeader()
         fprintf(g_flv_tag,"TAG    流ID:    %d 一般值固定为0\n",m_tagHeader->getStreamID());
         if(m_tagHeader->getStreamID())
         {
-            fprintf(g_flv_tag,"TAG  流信息:    TAG流信息错误，一般值固定为0\n");m_errors++;
+            fprintf(g_flv_tag,"TAG  流信息:    TAG流信息错误，一般值固定为0\n");g_errors++;
         }
     }
 
@@ -164,7 +172,12 @@ void Anlysis::readPreTagSize()
 
     if(s!=m_tagHeader->getSize())
     {
-        fprintf(g_flv_tag,"前一TAG  长:    错误与前一TAG长度不一致：当前%5d TAG头数据%5d\n",s,m_tagHeader->getSize());m_errors++;
+        fprintf(g_flv_tag,"前一TAG  长:    错误与前一TAG长度不一致：当前%5d TAG头数据%5d\n",s,m_tagHeader->getSize());g_errors++;
+    }
+
+    if(m_param->b_nflv)
+    {
+        fwrite(size,1,4,g_flv_out);
     }
 
 }
@@ -186,8 +199,8 @@ void Anlysis::anlysis()
             printf("%5d   Tags 分析完毕\n",m_tagConter);
         }
 
+        m_tagData.m_param = m_param;
         m_tagData.size = m_tagHeader->getSize()-11;             //获取Tag数据长度
-        m_tagData.decoderTimeStamp = m_tagHeader->getTimeStamp();//获取Tag解码时间戳
         m_tagData.data = (unsigned char*)malloc(m_tagData.size);//申请Tag数据内存
         if(!m_tagData.data)
         {
@@ -196,16 +209,40 @@ void Anlysis::anlysis()
         }
         fread(m_tagData.data,1,m_tagData.size,g_flv_file);      //获取Tag数据
 
+        if(m_param->b_tag)//分析tag
+        {
+            m_tagData.anlysisTag(); //分析具体Tag数据
+        }
+
+        if(m_param->b_nflv)
+        {
+            m_mend_tagData.m_param = m_param;
+            m_mend_tagData.size = m_mend_tagHeader->getSize()-11;    //获取Tag数据长度
+            m_mend_tagData.data = (unsigned char*)malloc(m_mend_tagData.size);//申请Tag数据内存
+            if(!m_mend_tagData.data)
+            {
+                fprintf(g_flv_tag,"错误:m_mend_tagData.data分配内存失败\n");
+                break;
+            }
+            memcpy(m_mend_tagData.data,m_tagData.data,m_mend_tagData.size);   //获取Tag数据
+            {
+                //修改待 添加
+            }
+            fwrite(m_mend_tagData.data,1,m_mend_tagData.size,g_flv_out); //写tag信息
+
+            free(m_mend_tagData.data);//释放内存
+        }
+
         free(m_tagData.data);//释放内存
         readPreTagSize();//分析前一个Tag Size
         m_tagConter++;   //计数Tag个数
 
         //break;        
     }
-    printf("errors:    %d\n",m_errors);
+    printf("errors:    %d\n",g_errors);
 
     //FLV概要信息
     fprintf(g_flv_tag,"\n\n==================FLV 概要信息=========================\n");
     fprintf(g_flv_tag,"FLV Tag个数:    %d\n",m_tagConter);
-    fprintf(g_flv_tag,"FLV错误个数:    %d\n",m_errors);
+    fprintf(g_flv_tag,"FLV错误个数:    %d\n",g_errors);
 }

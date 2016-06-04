@@ -17,8 +17,7 @@ class Anlysis
     TagHeader* m_mend_tagHeader;//修改后的Tag头信息
     TagData    m_mend_tagData;  //修改后的TagData信息
 
-    int        m_tagConter;     //统计tag的个数
-    int        m_errors;        //统计错误个数
+    int        m_tagConter;     //统计tag的个数    
 
 public:
 	Anlysis();

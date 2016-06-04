@@ -2,6 +2,9 @@
 #define XIAOC_TAG_H
 //作者  蔡砚刚  20160601  xiaoc@pku.edu.cn
 
+#include <stdio.h>
+#include "flv.h"
+#include "metadata.h"
 #pragma warning(disable: 4996) // POSIX setmode and fileno deprecated
 
 #define M16E6 16777216 //16^6
@@ -99,9 +102,15 @@ public:
 class TagData
 {
 public:
+    TagHeader*      m_tagHeader; //当前的Tag头信息
     unsigned char*  data; //存放TagData信息
     unsigned int    size; //存放TagData的size
     unsigned int    decoderTimeStamp; //解码时间戳
+    flv_param*      m_param;
+
+    MetaData        m_metaData;   //脚本数据
+
+    void anlysisTag();//分析tag
 };
 
 #endif
