@@ -21,72 +21,72 @@ int  g_errors        = 0;    //统计错误个数
 //打开flv相关文件
 void openFlvFiles()    
 {
-	if(flv_file_name)
-	{
-		g_flv_file = fopen(flv_file_name,"rb");
-		if(!g_flv_file)
-		{
-			printf("打开文件失败: %s\n",flv_file_name);
-			system("pause");
-			exit(0);
-		}
-	}
-	if(flv_tag_name)
-	{
-		g_flv_tag = fopen(flv_tag_name,"w");
-		if(!g_flv_tag)
-		{
-			printf("打开文件失败: %s\n",flv_tag_name);
-			system("pause");
-			exit(0);
-		}
-	}
+    if(flv_file_name)
+    {
+        g_flv_file = fopen(flv_file_name,"rb");
+        if(!g_flv_file)
+        {
+            printf("打开文件失败: %s\n",flv_file_name);
+            system("pause");
+            exit(0);
+        }
+    }
+    if(flv_tag_name)
+    {
+        g_flv_tag = fopen(flv_tag_name,"w");
+        if(!g_flv_tag)
+        {
+            printf("打开文件失败: %s\n",flv_tag_name);
+            system("pause");
+            exit(0);
+        }
+    }
 
-	if(flv_video_name)
-	{
-		g_flv_video = fopen(flv_video_name,"wb");
-		if(!g_flv_video)
-		{
-			printf("打开文件失败: %s\n",flv_video_name);
-			system("pause");
-			exit(0);
-		}
-	}
+    if(flv_video_name)
+    {
+        g_flv_video = fopen(flv_video_name,"wb");
+        if(!g_flv_video)
+        {
+            printf("打开文件失败: %s\n",flv_video_name);
+            system("pause");
+            exit(0);
+        }
+    }
 
-	if(flv_audio_name)
-	{
-		g_flv_audio = fopen(flv_audio_name,"wb");
-		if(!g_flv_audio)
-		{
-			printf("打开文件失败: %s\n",flv_audio_name);
-			system("pause");
-			exit(0);
-		}
-	}
+    if(flv_audio_name)
+    {
+        g_flv_audio = fopen(flv_audio_name,"wb");
+        if(!g_flv_audio)
+        {
+            printf("打开文件失败: %s\n",flv_audio_name);
+            system("pause");
+            exit(0);
+        }
+    }
 
-	if(flv_out_name)
-	{
-		g_flv_out = fopen(flv_out_name,"wb");
-		if(!g_flv_out)
-		{
-			printf("打开文件失败: %s\n",flv_out_name);
-			system("pause");
-			exit(0);
-		}
-	}
+    if(flv_out_name)
+    {
+        g_flv_out = fopen(flv_out_name,"wb");
+        if(!g_flv_out)
+        {
+            printf("打开文件失败: %s\n",flv_out_name);
+            system("pause");
+            exit(0);
+        }
+    }
 }
 
 //关闭flv相关文件
 void closeFlvFiles()   
 {
-	if(g_flv_file)
-		fclose(g_flv_file);
-	if(g_flv_tag)
-		fclose(g_flv_tag);
-	if(g_flv_video)
-		fclose(g_flv_video);
-	if(g_flv_audio)
-		fclose(g_flv_audio);
-	if(g_flv_out)
-		fclose(g_flv_out);
+    if(g_flv_file)
+        fclose(g_flv_file);
+    if(g_flv_tag)
+        fclose(g_flv_tag);
+    if(g_flv_video)
+        fclose(g_flv_video);
+    if(g_flv_audio)
+        fclose(g_flv_audio);
+    if(g_flv_out)
+        fclose(g_flv_out);
 }

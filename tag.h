@@ -13,17 +13,17 @@
 struct FlvHeader
 {
 private:
-	union
-	{
-		struct
-		{
-			unsigned char signature[3]; //分别是ASCII码表示的 F L V
-			unsigned char version;      //版本用一个字节表示：一般为0x01
-			unsigned char present;      //4表示只有音频 1表示只有视频 5 表示既有视频也有音频 其他值非法
-			unsigned char size[4];      //为FLV Header的长度，为固定值0x00000009  在标准中规定，版本1一定为9，在未来版本中可能会修正
-		};
-		unsigned char data[9];          //存储整个FLV头的数据 与上述数据共享内存
-	};
+    union
+    {
+        struct
+        {
+            unsigned char signature[3]; //分别是ASCII码表示的 F L V
+            unsigned char version;      //版本用一个字节表示：一般为0x01
+            unsigned char present;      //4表示只有音频 1表示只有视频 5 表示既有视频也有音频 其他值非法
+            unsigned char size[4];      //为FLV Header的长度，为固定值0x00000009  在标准中规定，版本1一定为9，在未来版本中可能会修正
+        };
+        unsigned char data[9];          //存储整个FLV头的数据 与上述数据共享内存
+    };
 public:
     unsigned char* getSignature()//获取签名
     {
@@ -51,17 +51,17 @@ public:
 struct TagHeader
 {
     private:
-	union
-	{
-		struct
-		{
-			unsigned char tagType;      //TAG类型: 8 表示音频tag 9表示视频tag 18表示脚本数据 40 表示经过滤波的音频 41表示经过滤波的视频 50表示经过滤波的脚本数据 其它值错误
-			unsigned char datasize[3];  //占24位 表示当前tag的后续长度等于当前整个tag长度减去11（tag头信息）
-			unsigned char timestamp[4]; //占24位为相对第一个Tag的时间戳，因此第一个Tag的时间戳为0。也可以将所有Tag的时间戳全配置为0，解码器会自动处理。 每个tag的第五个字节开始
-			unsigned char streamID;     //一直为0
-		};
-		unsigned char data[11];
-	};
+    union
+    {
+        struct
+        {
+            unsigned char tagType;      //TAG类型: 8 表示音频tag 9表示视频tag 18表示脚本数据 40 表示经过滤波的音频 41表示经过滤波的视频 50表示经过滤波的脚本数据 其它值错误
+            unsigned char datasize[3];  //占24位 表示当前tag的后续长度等于当前整个tag长度减去11（tag头信息）
+            unsigned char timestamp[4]; //占24位为相对第一个Tag的时间戳，因此第一个Tag的时间戳为0。也可以将所有Tag的时间戳全配置为0，解码器会自动处理。 每个tag的第五个字节开始
+            unsigned char streamID;     //一直为0
+        };
+        unsigned char data[11];
+    };
 public:
     unsigned char getTagType()//TAG类型
     {
