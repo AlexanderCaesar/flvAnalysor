@@ -19,7 +19,7 @@ static void showHelp()
 /* 设置flv的默认参数 */
 void flv_param_default(flv_param *param)
 {
-    param->b_tag   = 0;
+    param->b_tag   = 1;
     param->b_video = 0;
     param->b_audio = 0;    
     param->b_nflv  = 0;
