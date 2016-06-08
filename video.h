@@ -9,6 +9,7 @@ class Video
 public:
     TagData*     m_tagData;//指向当前的Tag文件
     unsigned int m_count;  //指示当前数据读取的位置
+    unsigned int m_left;   //指示当前位置还剩余多少位
     char         str[1000];//用于临时存储字符串
 
     /*
@@ -46,6 +47,9 @@ public:
     void   printfTimeStamp(char *p, int timestamp);//打印时间戳
 
     void   AVCDecoderConfigurationRecord();//H264 SPS PPS 等信息
+    
+    void   xReadUvlc(unsigned int& ruiVal);//解指数哥伦布码 
+    void   decodeH264NALs();               //H264 NAL 视频数据信息
     void   decodeH264();                           //H264解码
     void   anlysisVideo(TagData*  tagData);//分析视频数据
 

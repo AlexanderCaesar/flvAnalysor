@@ -3,6 +3,56 @@
 #include "tag.h"
 #include "flvfile.h"
 
+//解指数哥伦布码  ue(v)
+void Video::xReadUvlc(unsigned int& ruiVal)
+{
+    unsigned int uiVal = 0;
+    unsigned int uiCode = 0;
+    unsigned int uiLength;       
+
+    uiCode = (m_tagData->data[m_count]>>(m_left-1))%2;
+    m_left--;
+    if(m_left == 0)
+    {
+        m_count++; //读取新的字节
+        m_left = 8;
+    }
+
+    if( 0 == uiCode )
+    {
+        uiLength = 0;
+
+        while( ! ( uiCode & 1 ))
+        {
+            uiCode = (m_tagData->data[m_count]>>(m_left-1))%2;  //解前缀码，知道位宽
+            m_left--;
+            if(m_left == 0)
+            {
+                m_count++; //读取新的字节
+                m_left = 8;
+            }
+            uiLength++;
+        }
+
+        for(int i = 0; i< uiLength; i++)
+        {
+            uiCode = (m_tagData->data[m_count]>>(m_left-1))%2;  //解前缀码，知道位宽
+            m_left--;
+            if(m_left == 0)
+            {
+                m_count++; //读取新的字节
+                m_left = 8;
+            }
+
+            uiVal = uiVal*2 + uiCode;//记住前面已经读了一位
+        }
+        
+        uiVal += (1 << uiLength)-1;  //数据-1，得到真实值
+    }
+    ruiVal = uiVal;
+}
+
+
 void Video::printfTimeStamp(char *p, int timestamp)//打印时间戳
 {
     int hour = timestamp/(3600*1000);  
@@ -73,13 +123,123 @@ void Video::AVCDecoderConfigurationRecord()//H264 SPS PPS 等信息
         unsigned int sequenceParameterSetLength = m_tagData->data[m_count]*M16E2 + m_tagData->data[m_count + 1];
         if(m_tagData->m_param->b_tag)
         {
-            fprintf(g_flv_tag,"+++++++++++SPS %d +++++++++++\n",i);
+            fprintf(g_flv_tag,"+++++++++++SPS [%d] +++++++++++\n",i);
             fprintf(g_flv_tag,"SPS长度:%d\n",sequenceParameterSetLength);
+        }
+        if(m_tagData->m_param->b_video) //输出码流
+        {
+            unsigned char NALHeader[4]={0,0,0,1};
+            fwrite(NALHeader,1,4,g_flv_video);
+            fwrite(m_tagData->data+m_count+2,1,sequenceParameterSetLength,g_flv_video);
         }
         m_count += sequenceParameterSetLength + 2;
     }
-    //numOfPictureParameterSets       = m_tagData->data[m_count];//占用5位 表示当前PPS的个数 
+    numOfPictureParameterSets       = m_tagData->data[m_count++];//占用5位 表示当前PPS的个数 
 
+    for(int i = 0; i < numOfPictureParameterSets; i++)
+    {
+        unsigned int  pictureParameterSetLength = m_tagData->data[m_count]*M16E2 + m_tagData->data[m_count + 1];
+        if(m_tagData->m_param->b_tag)
+        {
+            fprintf(g_flv_tag,"+++++++++++PPS  [%d] +++++++++++\n",i);
+            fprintf(g_flv_tag,"PPS长度:%d\n",  pictureParameterSetLength);
+        }
+        if(m_tagData->m_param->b_video) //输出码流
+        {
+            unsigned char NALHeader[4]={0,0,0,1};
+            fwrite(NALHeader,1,4,g_flv_video);
+            fwrite(m_tagData->data+m_count+2,1, pictureParameterSetLength,g_flv_video);
+        }
+        m_count +=  pictureParameterSetLength + 2;
+    } 
+    if(m_count != m_tagData->size && m_tagData->m_param->b_tag)
+    {
+        fprintf(g_flv_tag,"AVCDecoderConfigurationRecord解析错误，未解析完毕\n");g_errors++;
+    }
+
+}
+
+void Video::decodeH264NALs()               //H264 NAL 视频数据信息
+{
+    unsigned int NALs = 0;
+    unsigned int temp_count = m_count;
+    while(temp_count < m_tagData->size)
+    {
+        unsigned int length = m_tagData->data[temp_count + 0]*M16E6 + m_tagData->data[temp_count + 1]*M16E4 + m_tagData->data[temp_count + 2]*M16E2 + m_tagData->data[temp_count + 3];
+        if(m_tagData->m_param->b_video) //输出码流
+        {
+            unsigned char NALHeader[4]={0,0,0,1};
+            fwrite(NALHeader,1,4,g_flv_video);
+            fwrite(m_tagData->data+temp_count+4,1, length,g_flv_video);
+        }
+        temp_count += length + 4;
+        NALs ++;
+    }
+    if(temp_count != m_tagData->size && m_tagData->m_param->b_tag)
+    {
+        fprintf(g_flv_tag,"decodeH264NALs解析错误，未解析完毕\n");g_errors++;
+    }
+    if(m_tagData->m_param->b_tag)
+    {
+        fprintf(g_flv_tag,"+++++++++++NAL单元信息+++++++++++\n");
+        fprintf(g_flv_tag,"NAL单元个数: %d \n",NALs);
+        for(int i = 0; i < NALs; i++)
+        {
+            fprintf(g_flv_tag,"+++++++++++NAL  [%d] +++++++++++\n",i);
+            unsigned int length = m_tagData->data[m_count + 0]*M16E6 + m_tagData->data[m_count + 1]*M16E4 + m_tagData->data[m_count + 2]*M16E2 + m_tagData->data[m_count + 3];
+            fprintf(g_flv_tag,"NAL长度: %d \n",length);
+            m_count += 4;
+            unsigned char nal_ref_idc = (m_tagData->data[m_count]&0x60)>>5;//NAL优先级  取值范围0~3，值越高表示NAL越重要，需要优先收到保护。
+            fprintf(g_flv_tag,"NAL权重: %d  \n",nal_ref_idc);
+            unsigned char nal_unit_type = m_tagData->data[m_count]&0x1F;
+            m_count++;
+
+            switch(nal_unit_type)
+            {
+            case  0:fprintf(g_flv_tag,"NAL类型：%d 未使用\n",nal_unit_type);break;
+            case  1:fprintf(g_flv_tag,"NAL类型：%d 不分区、非IDR图像片\n",nal_unit_type);break;
+            case  2:fprintf(g_flv_tag,"NAL类型：%d 片分区A\n",nal_unit_type);break;
+            case  3:fprintf(g_flv_tag,"NAL类型：%d 片分区B\n",nal_unit_type);break;
+            case  4:fprintf(g_flv_tag,"NAL类型：%d 片分区C\n",nal_unit_type);break;
+            case  5:fprintf(g_flv_tag,"NAL类型：%d IDR图像中的片\n",nal_unit_type);break;
+            case  6:fprintf(g_flv_tag,"NAL类型：%d 补充增强信息单元SEI\n",nal_unit_type);break;
+            case  7:fprintf(g_flv_tag,"NAL类型：%d 序列参数集SPS\n",nal_unit_type);break;
+            case  8:fprintf(g_flv_tag,"NAL类型：%d 图像参数集PPS\n",nal_unit_type);break;
+            case  9:fprintf(g_flv_tag,"NAL类型：%d 分解符\n",nal_unit_type);break;
+            case 10:fprintf(g_flv_tag,"NAL类型：%d 序列结束\n",nal_unit_type);break;
+            case 11:fprintf(g_flv_tag,"NAL类型：%d 码流结束\n",nal_unit_type);break;
+            case 12:fprintf(g_flv_tag,"NAL类型：%d 填充\n",nal_unit_type);break;
+            default:fprintf(g_flv_tag,"NAL类型：%d 保留或者未使用\n",nal_unit_type);
+            }
+
+            temp_count = m_count;//临时存放 count信息，后面会被更新
+            m_left = 8; //当前字节还剩余8位未读
+            if(nal_unit_type == 1||nal_unit_type == 5) //解析sliceheader
+            {
+                unsigned int first_mb_in_slice = 0;
+                unsigned int slice_type = 0;
+                xReadUvlc(first_mb_in_slice);
+                xReadUvlc(slice_type);
+                fprintf(g_flv_tag,"first_mb_in_slice：%d \n",first_mb_in_slice);
+                switch(slice_type)
+                {
+                case  0:fprintf(g_flv_tag,"Slice类型：%d P Slice\n",slice_type);break;
+                case  1:fprintf(g_flv_tag,"Slice类型：%d B Slice\n",slice_type);break;
+                case  2:fprintf(g_flv_tag,"Slice类型：%d I Slice\n",slice_type);break;
+                case  3:fprintf(g_flv_tag,"Slice类型：%d SP Slice\n",slice_type);break;
+                case  4:fprintf(g_flv_tag,"Slice类型：%d SI Slice\n",slice_type);break;
+                case  5:fprintf(g_flv_tag,"Slice类型：%d P Slice\n",slice_type);break;
+                case  6:fprintf(g_flv_tag,"Slice类型：%d B Slice\n",slice_type);break;
+                case  7:fprintf(g_flv_tag,"Slice类型：%d I Slice\n",slice_type);break;
+                case  8:fprintf(g_flv_tag,"Slice类型：%d SP Slice\n",slice_type);break;
+                case  9:fprintf(g_flv_tag,"Slice类型：%d SI Slice\n",slice_type);break;
+                default:fprintf(g_flv_tag,"Slice类型错误：%d 无此帧类型\n",slice_type);
+                }
+            }
+            m_count = temp_count + length -1;//前面多读取了一个头信息
+            //解析NAL单元
+        }        
+    }
 }
 void Video::decodeH264() //解码H264码流
 {
@@ -90,7 +250,7 @@ void Video::decodeH264() //解码H264码流
 
     if(m_AVCPacketType == 1)//视频数据
     {
-
+        decodeH264NALs();
     }
 }
 void Video::anlysisVideo(TagData*  tagData)

@@ -199,10 +199,10 @@ void Anlysis::anlysis()
             printf("%5d   Tags 分析完毕\n",m_tagConter);
         }
 
-        if(m_tagConter == 100)
-        {
-            m_param->b_tag = 0;
-        }
+        //if(m_tagConter == 100)
+        //{
+        //    m_param->b_tag = 0;
+        //}
 
         m_tagData.m_param = m_param;
         m_tagData.size = m_tagHeader->getSize()-11;             //获取Tag数据长度
