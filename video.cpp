@@ -34,7 +34,7 @@ void Video::xReadUvlc(unsigned int& ruiVal)
             uiLength++;
         }
 
-        for(int i = 0; i< uiLength; i++)
+        for(unsigned int i = 0; i< uiLength; i++)
         {
             uiCode = (m_tagData->data[m_count]>>(m_left-1))%2;  //解前缀码，知道位宽
             m_left--;
@@ -183,7 +183,7 @@ void Video::decodeH264NALs()               //H264 NAL 视频数据信息
     {
         fprintf(g_flv_tag,"+++++++++++NAL单元信息+++++++++++\n");
         fprintf(g_flv_tag,"NAL单元个数: %d \n",NALs);
-        for(int i = 0; i < NALs; i++)
+        for(unsigned int i = 0; i < NALs; i++)
         {
             fprintf(g_flv_tag,"+++++++++++NAL  [%d] +++++++++++\n",i);
             unsigned int length = m_tagData->data[m_count + 0]*M16E6 + m_tagData->data[m_count + 1]*M16E4 + m_tagData->data[m_count + 2]*M16E2 + m_tagData->data[m_count + 3];

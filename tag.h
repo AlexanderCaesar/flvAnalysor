@@ -6,6 +6,7 @@
 #include "flv.h"
 #include "metadata.h"
 #include "video.h"
+#include "audio.h"
 #pragma warning(disable: 4996) // POSIX setmode and fileno deprecated
 
 #define M16E6 16777216 //16^6
@@ -111,6 +112,7 @@ public:
 
     MetaData        m_metaData;   //脚本数据
     Video           m_video;      //视频数据
+    Audio           m_audio;      //音频数据
 
     void anlysisTag();//分析tag
 };
